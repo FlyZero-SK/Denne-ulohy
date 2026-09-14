@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Denné úlohy</title>
+<style>
+  :root{
+    --bg:#EFEAE0;
+    --surface:#FBF8F2;
+    --surface-alt:#F3EEE2;
+    --ink:#2B2A25;
+    --ink-soft:#6E6B5F;
+    --ink-faint:#A6A08D;
+    --border:#DCD5C4;
+    --rust:#A6432B;
+    --rust-bg:#F4E3DD;
+    --moss:#4F6B4A;
+    --moss-bg:#E4EBDF;
+    --pr-high:#A6432B;
+    --pr-medium:#B9862E;
+    --pr-low:#7C8168;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:calc(24px + env(safe-area-inset-bottom));
+  }
+  header{
+    padding:calc(20px + env(safe-area-inset-top)) 20px 16px;
+  }
+  .eyebrow{
+    font-family:Georgia,"Times New Roman",serif;
+    font-style:italic;
+    color:var(--ink-soft);
+    font-size:14px;
+    margin:0 0 2px;
+  }
+  h1{
+    font-family:Georgia,"Times New Roman",serif;
+    font-weight:400;
+    font-size:28px;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .summary{
+    display:flex;
+    gap:10px;
+    margin-top:16px;
+  }
+  .summary-card{
+    flex:1;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px 12px;
+  }
+  .summary-card .num{
+    font-size:22px;
+    font-weight:600;
+    line-height:1.1;
+  }
+  .summary-card .lbl{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:2px;
+  }
+  .summary-card.warn .num{ color:var(--rust); }
+
+  .composer{
+    display:flex;
+    gap:8px;
+    padding:0 20px 8px;
+  }
+  .composer input[type=text]{
+    flex:1;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:12px 14px;
+    font-size:16px;
+    color:var(--ink);
+  }
+  .composer input[type=text]:focus{
+    outline:none;
+    border-color:var(--ink-faint);
+  }
+  .composer button{
+    background:var(--ink);
+    color:var(--surface);
+    border:none;
+    border-radius:10px;
+    padding:0 18px;
+    font-size:22px;
+    line-height:1;
+  }
+  .composer button:active{ opacity:0.8; }
+
+  .composer-options{
+    display:flex;
+    gap:8px;
+    padding:0 20px 14px;
+  }
+  .composer-options select,
+  .composer-options input[type=text]{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:8px 10px;
+    font-size:13px;
+    color:var(--ink);
+  }
+  .composer-options select{ flex:none; width:120px; }
+  .composer-options input[type=text]{ flex:1; min-width:0; }
+
+  main{ padding:8px 20px 0; }
+  .section-title{
+    font-size:13px;
+    color:var(--ink-soft);
+    margin:20px 0 8px;
+  }
+  .section-title.warn{ color:var(--rust); }
+
+  ul.tasks{ list-style:none; margin:0; padding:0; }
+  li.task{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left:3px solid var(--border);
+    border-radius:8px;
+    padding:12px 12px;
+    margin-bottom:8px;
+  }
+  li.task.overdue{
+    border-left-color:var(--rust);
+    background:var(--rust-bg);
+  }
+  li.task.done{
+    opacity:0.55;
+  }
+  li.task .check{
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    border:1.5px solid var(--ink-faint);
+    flex:none;
+    margin-top:1px;
+    background:transparent;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--surface);
+    font-size:13px;
+  }
+  li.task.done .check{
+    background:var(--moss);
+    border-color:var(--moss);
+  }
+  li.task .body{ flex:1; min-width:0; }
+  li.task .text-row{
+    display:flex;
+    align-items:baseline;
+    gap:7px;
+  }
+  li.task .dot{
+    flex:none;
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    margin-top:2px;
+  }
+  li.task .text{
+    font-size:15px;
+    line-height:1.4;
+    word-break:break-word;
+  }
+  li.task.done .text{
+    text-decoration:line-through;
+  }
+  li.task .meta{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:3px;
+  }
+  li.task .tag{
+    background:var(--surface-alt);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:1px 7px;
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+  li.task.overdue .meta{ color:var(--rust); }
+  li.task .actions{
+    flex:none;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:6px;
+  }
+  li.task .del{
+    background:none;
+    border:none;
+    color:var(--ink-faint);
+    font-size:18px;
+    padding:0 2px;
+  }
+  li.task .cal-btn{
+    background:none;
+    border:1px solid var(--border);
+    border-radius:6px;
+    color:var(--ink-soft);
+    font-size:11px;
+    padding:3px 7px;
+    white-space:nowrap;
+  }
+  li.task .cal-btn:active{ opacity:0.7; }
+  li.task .edit-btn{
+    background:none;
+    border:1px solid var(--border);
+    border-radius:6px;
+    color:var(--ink-soft);
+    font-size:11px;
+    padding:3px 7px;
+    white-space:nowrap;
+  }
+  li.task .edit-btn:active{ opacity:0.7; }
+  .edit-panel{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .edit-panel input[type=text]{
+    background:var(--surface-alt);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:9px 10px;
+    font-size:15px;
+    color:var(--ink);
+    width:100%;
+  }
+  .edit-panel .edit-options{
+    display:flex;
+    gap:8px;
+  }
+  .edit-panel select{
+    background:var(--surface-alt);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:7px 8px;
+    font-size:12px;
+    color:var(--ink);
+    flex:none;
+    width:110px;
+  }
+  .edit-panel .cat-input{
+    flex:1;
+    min-width:0;
+    font-size:12px !important;
+    padding:7px 8px !important;
+  }
+  .edit-panel .edit-row{
+    display:flex;
+    gap:8px;
+  }
+  .edit-panel .edit-row button{
+    flex:1;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:var(--ink);
+    color:var(--surface);
+    font-size:13px;
+    padding:8px 0;
+  }
+  .edit-panel .edit-row button.cancel{
+    background:transparent;
+    color:var(--ink-soft);
+  }
+  .cal-panel{
+    margin-top:10px;
+    padding-top:10px;
+    border-top:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .cal-panel input[type=datetime-local]{
+    background:var(--surface-alt);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:8px 10px;
+    font-size:13px;
+    color:var(--ink);
+    width:100%;
+  }
+  .cal-panel .cal-row{
+    display:flex;
+    gap:8px;
+  }
+  .cal-panel .cal-row button{
+    flex:1;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:var(--ink);
+    color:var(--surface);
+    font-size:13px;
+    padding:8px 0;
+  }
+  .cal-panel .cal-row button.cancel{
+    background:transparent;
+    color:var(--ink-soft);
+  }
+  .empty{
+    text-align:center;
+    color:var(--ink-soft);
+    padding:32px 10px;
+    font-size:14px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow" id="today-label"></p>
+  <h1>Denné úlohy</h1>
+  <div class="summary">
+    <div class="summary-card">
+      <div class="num" id="count-active">0</div>
+      <div class="lbl">aktívne</div>
+    </div>
+    <div class="summary-card warn">
+      <div class="num" id="count-overdue">0</div>
+      <div class="lbl">staršie ako 3 dni</div>
+    </div>
+  </div>
+</header>
+
+<div class="composer">
+  <input type="text" id="input" placeholder="Pridať úlohu" maxlength="200" />
+  <button id="add-btn" aria-label="Pridať">+</button>
+</div>
+<div class="composer-options">
+  <select id="priority-input" aria-label="Priorita">
+    <option value="low">Nízka priorita</option>
+    <option value="medium" selected>Stredná priorita</option>
+    <option value="high">Vysoká priorita</option>
+  </select>
+  <input type="text" id="category-input" placeholder="Kategória (nepovinné)" maxlength="30" />
+</div>
+
+<main id="main"></main>
+
+<script>
+const DAY_MS = 24*60*60*1000;
+const STORAGE_KEY = 'tasks';
+let tasks = [];
+
+function fmtDate(d){
+  return d.toLocaleDateString('sk-SK', {weekday:'long', day:'numeric', month:'long'});
+}
+function daysOld(iso){
+  const created = new Date(iso);
+  const now = new Date();
+  return Math.floor((now - created) / DAY_MS);
+}
+function fmtAge(iso){
+  const n = daysOld(iso);
+  if(n <= 0) return 'dnes';
+  if(n === 1) return 'včera';
+  return n + ' dní';
+}
+
+function defaultCalDateTime(){
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(9,0,0,0);
+  const pad = n => String(n).padStart(2,'0');
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
+function toIcsDate(dt){
+  return dt.getUTCFullYear() +
+    String(dt.getUTCMonth()+1).padStart(2,'0') +
+    String(dt.getUTCDate()).padStart(2,'0') + 'T' +
+    String(dt.getUTCHours()).padStart(2,'0') +
+    String(dt.getUTCMinutes()).padStart(2,'0') +
+    String(dt.getUTCSeconds()).padStart(2,'0') + 'Z';
+}
+
+function icsEscape(s){
+  return String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
+}
+
+function buildIcs(task, startLocal){
+  const start = new Date(startLocal);
+  const end = new Date(start.getTime() + 30*60000);
+  const stamp = new Date();
+  const uid = task.id + '@denne-ulohy';
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Denne ulohy//SK',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    'UID:' + uid,
+    'DTSTAMP:' + toIcsDate(stamp),
+    'DTSTART:' + toIcsDate(start),
+    'DTEND:' + toIcsDate(end),
+    'SUMMARY:' + icsEscape(task.text),
+    'DESCRIPTION:' + icsEscape((task.category ? 'Kategória: ' + task.category + '. ' : '') + 'Priorita: ' + PRIORITY_LABEL[task.priority || 'medium']),
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ];
+  return lines.join('\r\n');
+}
+
+async function shareTaskAsEvent(task, startLocal){
+  if(!startLocal) return;
+  const ics = buildIcs(task, startLocal);
+  const fileName = 'uloha-' + task.id + '.ics';
+  const file = new File([ics], fileName, { type: 'text/calendar' });
+
+  if(navigator.canShare && navigator.canShare({ files: [file] })){
+    try{
+      await navigator.share({ files: [file], title: task.text });
+      return;
+    }catch(e){
+      if(e && e.name === 'AbortError') return;
+    }
+  }
+
+  const blob = new Blob([ics], { type: 'text/calendar' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    tasks = raw ? JSON.parse(raw) : [];
+  }catch(e){
+    tasks = [];
+  }
+  render();
+}
+
+function save(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  }catch(e){
+    console.error('Uloženie zlyhalo', e);
+  }
+}
+
+const PRIORITY_RANK = { high:0, medium:1, low:2 };
+const PRIORITY_LABEL = { high:'Vysoká priorita', medium:'Stredná priorita', low:'Nízka priorita' };
+
+function addTask(text, priority, category){
+  const t = text.trim();
+  if(!t) return;
+  tasks.push({
+    id: 't' + Date.now() + Math.random().toString(36).slice(2,7),
+    text: t,
+    created_at: new Date().toISOString(),
+    done: false,
+    priority: priority || 'medium',
+    category: (category || '').trim()
+  });
+  save();
+  render();
+}
+
+function toggleTask(id){
+  const t = tasks.find(x => x.id === id);
+  if(t) t.done = !t.done;
+  save();
+  render();
+}
+
+function deleteTask(id){
+  tasks = tasks.filter(x => x.id !== id);
+  save();
+  render();
+}
+
+let editingId = null;
+
+function updateTask(id, text, priority, category){
+  const t = tasks.find(x => x.id === id);
+  if(!t) return;
+  const cleanText = text.trim();
+  if(cleanText) t.text = cleanText;
+  t.priority = priority || 'medium';
+  t.category = (category || '').trim();
+  editingId = null;
+  save();
+  render();
+}
+
+function taskEl(t, overdue){
+  const li = document.createElement('li');
+  li.className = 'task' + (overdue ? ' overdue' : '') + (t.done ? ' done' : '');
+
+  if(editingId === t.id){
+    const editPanel = document.createElement('div');
+    editPanel.className = 'edit-panel';
+    editPanel.style.flex = '1';
+
+    const textInput = document.createElement('input');
+    textInput.type = 'text';
+    textInput.value = t.text;
+    textInput.maxLength = 200;
+
+    const opts = document.createElement('div');
+    opts.className = 'edit-options';
+    const prSelect = document.createElement('select');
+    [['low','Nízka priorita'],['medium','Stredná priorita'],['high','Vysoká priorita']].forEach(([v,l]) => {
+      const o = document.createElement('option');
+      o.value = v; o.textContent = l;
+      if((t.priority || 'medium') === v) o.selected = true;
+      prSelect.appendChild(o);
+    });
+    const catInput = document.createElement('input');
+    catInput.type = 'text';
+    catInput.className = 'cat-input';
+    catInput.placeholder = 'Kategória (nepovinné)';
+    catInput.maxLength = 30;
+    catInput.value = t.category || '';
+    opts.appendChild(prSelect);
+    opts.appendChild(catInput);
+
+    const row = document.createElement('div');
+    row.className = 'edit-row';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'cancel';
+    cancelBtn.textContent = 'Zrušiť';
+    cancelBtn.onclick = () => { editingId = null; render(); };
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = 'Uložiť';
+    saveBtn.onclick = () => updateTask(t.id, textInput.value, prSelect.value, catInput.value);
+    row.appendChild(cancelBtn);
+    row.appendChild(saveBtn);
+
+    editPanel.appendChild(textInput);
+    editPanel.appendChild(opts);
+    editPanel.appendChild(row);
+    li.appendChild(editPanel);
+    return li;
+  }
+
+  const check = document.createElement('button');
+  check.className = 'check';
+  check.setAttribute('aria-label', t.done ? 'Označiť ako nesplnené' : 'Označiť ako splnené');
+  check.textContent = t.done ? '✓' : '';
+  check.onclick = () => toggleTask(t.id);
+
+  const body = document.createElement('div');
+  body.className = 'body';
+
+  const textRow = document.createElement('div');
+  textRow.className = 'text-row';
+  const dot = document.createElement('span');
+  dot.className = 'dot';
+  dot.style.background = 'var(--pr-' + (t.priority || 'medium') + ')';
+  dot.title = PRIORITY_LABEL[t.priority || 'medium'];
+  const text = document.createElement('div');
+  text.className = 'text';
+  text.textContent = t.text;
+  textRow.appendChild(dot);
+  textRow.appendChild(text);
+
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  const age = document.createElement('span');
+  age.textContent = fmtAge(t.created_at);
+  meta.appendChild(age);
+  if(t.category){
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.textContent = t.category;
+    meta.appendChild(tag);
+  }
+
+  body.appendChild(textRow);
+  body.appendChild(meta);
+
+  const panel = document.createElement('div');
+  panel.className = 'cal-panel';
+  panel.style.display = 'none';
+  const dtInput = document.createElement('input');
+  dtInput.type = 'datetime-local';
+  dtInput.value = defaultCalDateTime();
+  const calRow = document.createElement('div');
+  calRow.className = 'cal-row';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'cancel';
+  cancelBtn.textContent = 'Zrušiť';
+  cancelBtn.onclick = () => { panel.style.display = 'none'; };
+  const shareBtn = document.createElement('button');
+  shareBtn.textContent = 'Zdieľať';
+  shareBtn.onclick = () => shareTaskAsEvent(t, dtInput.value);
+  calRow.appendChild(cancelBtn);
+  calRow.appendChild(shareBtn);
+  panel.appendChild(dtInput);
+  panel.appendChild(calRow);
+  body.appendChild(panel);
+
+  const actions = document.createElement('div');
+  actions.className = 'actions';
+
+  const calBtn = document.createElement('button');
+  calBtn.className = 'cal-btn';
+  calBtn.textContent = 'Do kalendára';
+  calBtn.onclick = () => { panel.style.display = panel.style.display === 'none' ? 'flex' : 'none'; };
+
+  const editBtn = document.createElement('button');
+  editBtn.className = 'edit-btn';
+  editBtn.textContent = 'Upraviť';
+  editBtn.onclick = () => { editingId = t.id; render(); };
+
+  const del = document.createElement('button');
+  del.className = 'del';
+  del.setAttribute('aria-label', 'Vymazať úlohu');
+  del.textContent = '×';
+  del.onclick = () => deleteTask(t.id);
+
+  actions.appendChild(calBtn);
+  actions.appendChild(editBtn);
+  actions.appendChild(del);
+
+  li.appendChild(check);
+  li.appendChild(body);
+  li.appendChild(actions);
+  return li;
+}
+
+function render(){
+  document.getElementById('today-label').textContent = fmtDate(new Date());
+
+  const byPriorityThenDate = (a,b) => {
+    const pr = PRIORITY_RANK[a.priority || 'medium'] - PRIORITY_RANK[b.priority || 'medium'];
+    if(pr !== 0) return pr;
+    return new Date(a.created_at) - new Date(b.created_at);
+  };
+
+  const active = tasks.filter(t => !t.done);
+  const overdue = active.filter(t => daysOld(t.created_at) >= 3).sort(byPriorityThenDate);
+  const recent = active.filter(t => daysOld(t.created_at) < 3).sort(byPriorityThenDate);
+  const done = tasks.filter(t => t.done).sort((a,b)=> new Date(b.created_at)-new Date(a.created_at));
+
+  document.getElementById('count-active').textContent = active.length;
+  document.getElementById('count-overdue').textContent = overdue.length;
+
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+
+  if(tasks.length === 0){
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.textContent = 'Zatiaľ žiadne úlohy. Pridaj prvú vyššie.';
+    main.appendChild(empty);
+    return;
+  }
+
+  if(overdue.length){
+    const h = document.createElement('div');
+    h.className = 'section-title warn';
+    h.textContent = 'Potrebuje pozornosť';
+    main.appendChild(h);
+    const ul = document.createElement('ul');
+    ul.className = 'tasks';
+    overdue.forEach(t => ul.appendChild(taskEl(t, true)));
+    main.appendChild(ul);
+  }
+
+  if(recent.length){
+    const h = document.createElement('div');
+    h.className = 'section-title';
+    h.textContent = 'Aktívne';
+    main.appendChild(h);
+    const ul = document.createElement('ul');
+    ul.className = 'tasks';
+    recent.forEach(t => ul.appendChild(taskEl(t, false)));
+    main.appendChild(ul);
+  }
+
+  if(done.length){
+    const h = document.createElement('div');
+    h.className = 'section-title';
+    h.textContent = 'Splnené';
+    main.appendChild(h);
+    const ul = document.createElement('ul');
+    ul.className = 'tasks';
+    done.forEach(t => ul.appendChild(taskEl(t, false)));
+    main.appendChild(ul);
+  }
+}
+
+function submitTask(){
+  const input = document.getElementById('input');
+  const priority = document.getElementById('priority-input');
+  const category = document.getElementById('category-input');
+  addTask(input.value, priority.value, category.value);
+  input.value = '';
+  category.value = '';
+  input.focus();
+}
+
+document.getElementById('add-btn').onclick = submitTask;
+document.getElementById('input').addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') submitTask();
+});
+
+load();
+</script>
+</body>
+</html>
