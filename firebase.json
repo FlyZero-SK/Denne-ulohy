@@ -1,0 +1,16 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "auth": {
+    "providers": {
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Denné úlohy",
+        "supportEmail": "richard.graczer@gmail.com",
+        "authorizedRedirectUris": [
+          "https://flyzero-sk.github.io/Denne-ulohy/"
+        ]
+      }
+    }
+  }
+}
